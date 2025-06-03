@@ -7,42 +7,47 @@ const router = express.Router();
  * JOBS api
  *
  * Scenario:
- * - Employers can create jobs specifying title, description, price, location, and required skills.
- * - Employers can view the list of jobs they have created.
- * - Employers can assign a job to one or more students based on skills. (Searching students by skill is handled in employer.js /employer/students/skills/:skill)
- * - Students can view the list of jobs assigned to them. This is done by filtering jobs where their studentId exists in the `assignments[]` array.
+ * - Employers can create jobs specifying title, description, price, location, and required skills and softskills. (POST /)
+ * - Employers can view the list of jobs they have created. (GET /)
+ * - Students can also the list of jobs assigned to them (GET /)
+ *    - In GET /job, if the user role is "student", the job list is filtered to only include jobs where the current studentId appears in just one assignment in the `assignments[]` array.
+ * - Employers can assign a job to one or more students based on skills and softSkills on the job edit form page (Searching students by skill and softSkills in the "job edit page" is handled in employer.js GET /employer/students/skills/:skill)
+ * - Students can view the list of jobs assigned to them. This is done by filtering jobs where their studentId exists in the `assignments[]` array. (GET /)
  * - Each student can independently accept, reject, or complete their assigned job.
- * - Once a student marks their assignment as completed, the employer can verify it.
+ *    - Students can use (PUT /:jobId/accept) to accept the job 
+ *    - Students can use (PUT /:jobId/reject) to reject the job
+ *    - Students can use (PUT /:jobId/complete) to complete the accepted job
+ * - Once a student marks their assignment as completed, the employer can verify the job assigned to student. 
+ *    - Students can use (PUT /:jobId/verify) to verify the job 
  *
- * - Employers can Delete a job only if there are no assigned students)
- *
+ * - Employers can delete a job only if there are no assigned students (DELETE /:jobId)
+ * - Employers can search students by their skills and softSkills in the Search page (Searching students by skill and softSkills in the  "search page" is handled in employer.js GET /search-students)
  * - Students and Employers can get job details using: GET /jobs/:jobId
+ * 
+ * - Employers can see the student digital skill wallet when they click on "Show Dashboard" in the the "Search student page" or in the job edit form (Matching Students section) (will navigate to /digital-skill-wallet/${studentId})
  *
  * Job Document Structure:
- * - title: string
- * - description: string
- * - price: number
- * - location: string
- * - skills: array of strings
- * - employerId: string (UID of the employer)
+ * - title: string (Mandatory)
+ * - description: string (Mandatory)
+ * - price: number (Mandatory)
+ * - location: string (Mandatory)
+ * - skills: array of strings (Mandatory) 
+ * - softSkills array of strings (Not mandatory)
+ * - employerId: string (UID of the employer) (Mandatory)
  * - assignments: array of objects, each containing:
  *     - studentId: string
- *     - status: string ("assigned", "accepted", "rejected", "completed")
+ *     - status: string ("assigned", "accepted", "rejected", "completed", "verified")
  *     - timestamp: string (ISO date)
- * - verified: boolean (true if employer verifies any completed assignment)
- * - createdAt: timestamp
+ * - createdAt: string (ISO date)
  *
- * Status Workflow (per student assignment):
+ * Job Status Workflow (per student assignment):
  * 1. Created → Job starts with an empty `assignments` array
  * 2. Assigned → A student is added to `assignments[]` with status: "assigned"
  * 3. Student Accepts → That assignment's status becomes: "accepted"
  * 4. Student Rejects → That assignment's status becomes: "rejected"
  * 5. Student Completes → That assignment's status becomes: "completed"
- * 6. Employer Verifies → `verified` set to true after confirming any completed assignment
+ * 6. Employer Verifies → That assignment's status becomes: "verified"
  *
- * How Students See Assigned Jobs:
- * - In GET /job, if the user role is "student", the job list is filtered to only include jobs
- *   where the current studentId appears in at least one assignment in the `assignments[]` array.
  */
 
 // Middleware: verify token and attach user info
